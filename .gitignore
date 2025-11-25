@@ -1,0 +1,55 @@
+## 🐍 Python-Specific Files
+# Byte-code and compiled files
+*.pyc
+__pycache__/
+*.pyd
+$py.class
+
+## 📦 Virtual Environment
+# The standard directory name for a virtual environment
+venv/
+.venv/
+env/
+/bin/
+/include/
+/lib/
+/lib64/
+
+## 🛠️ Build and Distribution
+# Distribution / packaging
+dist/
+build/
+*.egg
+*.whl
+*.egg-info/
+.installed.cfg
+
+## 📜 Dependencies and Environment Management
+# pip and setuptools temporary files
+pip-log.txt
+.pip_log
+.tox/
+
+## 💡 IDE and Editor Files
+# Popular IDEs and Editors
+.idea/           # JetBrains (PyCharm, IntelliJ)
+*.swp            # vim swap files
+*~               # Backup files created by various editors
+.vscode/         # Visual Studio Code
+.mypy_cache/     # mypy type checker cache
+.ruff_cache/     # Ruff linter cache
+
+## 📊 Testing and Database
+# Coverage reports
+.coverage
+htmlcov/
+.nox/
+
+# SQLite databases or other temporary database files
+*.db
+*.sqlite
+*.sqlite3
+
+## ☁️ OS Specific
+.DS_Store        # macOS system files
+thumbs.db        # Windows thumbnail cache
