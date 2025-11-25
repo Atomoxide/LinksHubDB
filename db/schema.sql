@@ -14,7 +14,7 @@ create table subcategory (
     subcategory_name VARCHAR(40) UNIQUE,
     category_id INTEGER,
     FOREIGN KEY(category_id) REFERENCES category(id)
-)
+);
 
 create table item (
     item_id INTEGER PRIMARY KEY,
@@ -29,4 +29,4 @@ create table local (
     local_id INTEGER PRIMARY KEY,
     label VARCHAR(40),
     zh VARCHAR(40)
-)
+);
