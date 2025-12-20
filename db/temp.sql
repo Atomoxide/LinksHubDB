@@ -49,6 +49,9 @@ insert into local (label, zh) values
 ('info', '资讯'),
 ('official', '官方'),
 ('plugin', '插件'),
-('archive', '旧版本归档');
+('zzzarchive', '旧版本归档');
 
 update meta set meta_content = '暂无公告\nQQ群：1039708188' where meta_name = 'announcement';
+
+update category set category_name = 'zzzarchive' where category_id = 5;
+update local set label = 'zzzarchive' WHERE local_id = 13;

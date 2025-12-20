@@ -46,9 +46,9 @@ htmlcov/
 .nox/
 
 # SQLite databases or other temporary database files
-*.db
-*.sqlite
-*.sqlite3
+# *.db
+# *.sqlite
+# *.sqlite3
 
 ## ☁️ OS Specific
 .DS_Store        # macOS system files
