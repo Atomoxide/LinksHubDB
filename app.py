@@ -58,11 +58,24 @@ def get_connection():
     if not authorized: return {"status": "Unauthorized"}, 401
     return {"status": "Success"}, 200
 
-@app.route('/api/get_items', methods=['GET'])
-def get_items():
-    # authorized = authorize(request=request)
-    # if not authorized: return {"status": "Unauthorized"}, 401
+@app.route('/api/get_data', methods=['GET'])
+def get_data():
     items = query_db('select item_id, item_name, item_description, item_url, category_name, subcategory_name from item join subcategory on item.subcategory_id = subcategory.subcategory_id join category on subcategory.category_id = category.category_id')
+    items_list = [dict(item) for item in items]
+    concat_data = dict()
+    for item in items_list:
+        category = item.pop('category_name')
+        subcategory = item.pop('subcategory_name')
+        if category not in concat_data:
+            concat_data[category] = dict()
+        if subcategory not in concat_data[category]:
+            concat_data[category][subcategory] = list()
+        concat_data[category][subcategory].append(item)
+    return jsonify(concat_data), 200
+
+@app.route('/api/get_data_raw', methods=['GET'])
+def get_data_raw():
+    items = query_db('select item_id as id, item_name as name, item_description as description, item_url as url, category_name as category, subcategory_name as subcategory from item join subcategory on item.subcategory_id = subcategory.subcategory_id join category on subcategory.category_id = category.category_id')
     items_list = [dict(item) for item in items]
     return jsonify(items_list), 200
 
@@ -87,16 +100,26 @@ def get_announcement():
         return {"status": "Not Found"}, 404
     return {"announcement": announcement['meta_content']}, 200
 
-@app.route('/api/get_channels', methods=['GET'])
+@app.route('/api/get_channel', methods=['GET'])
 def get_channels():
     channels = query_db('select meta_content from meta where meta_name = ?', ['channels'], one=True)
     if channels is None:
         return {"status": "Not Found"}, 404
     return {"channels": channels['meta_content']}, 200
 
+@app.route('/api/get_subcategories', methods=['GET'])
+def get_subcategories():
+    subcategories = query_db('select subcategory_name as name, subcategory_description as description from subcategory')
+    return jsonify({dict(sub)["name"]: dict(sub)["description"] for sub in subcategories}), 200
+
+@app.route('/api/get_i18n_ZH', methods=['GET'])
+def get_localization():
+    localizations = query_db('select label, zh from local')
+    return jsonify({dict(loc)["label"]: dict(loc)["zh"] for loc in localizations}), 200
+
 ## POST Methods
-@app.route('/api/add_item', methods=['POST'])
-def add_item():
+@app.route('/api/add_data', methods=['POST'])
+def add_data():
     authorized = authorize(request=request)
     if not authorized: return {"status": "Unauthorized"}, 401
     data = request.get_json()
@@ -107,6 +130,21 @@ def add_item():
     if item_name is None or item_description is None or item_url is None or subcategory_id is None:
         return {"status": "Bad Request"}, 400
     query_db('insert into item (item_name, item_description, item_url, subcategory_id) values (?, ?, ?, ?)', [item_name, item_description, item_url, subcategory_id])
+    return {"status": "Success"}, 200
+
+@app.route('/api/update_data', methods=['POST'])
+def update_data():
+    authorized = authorize(request=request)
+    if not authorized: return {"status": "Unauthorized"}, 401
+    data = request.get_json()
+    item_id = data.get('item_id')
+    item_name = data.get('item_name')
+    item_description = data.get('item_description')
+    item_url = data.get('item_url')
+    subcategory_id = data.get('subcategory_id')
+    if item_id is None or item_name is None or item_description is None or item_url is None or subcategory_id is None:
+        return {"status": "Bad Request"}, 400
+    query_db('update item set item_name = ?, item_description = ?, item_url = ?, subcategory_id = ? where item_id = ?', [item_name, item_description, item_url, subcategory_id, item_id])
     return {"status": "Success"}, 200
 
 @app.route('/api/update_version', methods=['POST'])
@@ -142,7 +180,7 @@ def update_announcement():
     query_db('update meta set meta_content = ? where meta_name = ?', [announcement, 'announcement'])
     return {"status": "Success"}, 200
 
-@app.route('/api/update_channels', methods=['POST'])
+@app.route('/api/update_channel', methods=['POST'])
 def update_channels():
     authorized = authorize(request=request)
     if not authorized: return {"status": "Unauthorized"}, 401
@@ -151,6 +189,55 @@ def update_channels():
     if channels is None:
         return {"status": "Bad Request"}, 400
     query_db('update meta set meta_content = ? where meta_name = ?', [channels, 'channels'])
+    return {"status": "Success"}, 200
+
+@app.route('/api/add_subcategory', methods=['POST'])
+def add_subcategory():
+    authorized = authorize(request=request)
+    if not authorized: return {"status": "Unauthorized"}, 401
+    data = request.get_json()
+    subcategory_name = data.get('subcategory_name')
+    subcategory_description = data.get('subcategory_description')
+    category_id = data.get('category_id')
+    if subcategory_name is None or subcategory_description is None or category_id is None:
+        return {"status": "Bad Request"}, 400
+    query_db('insert into subcategory (subcategory_name, subcategory_description, category_id) values (?, ?, ?)', [subcategory_name, subcategory_description, category_id])
+    return {"status": "Success"}, 200
+
+@app.route('/api/add_i18n_ZH', methods=['POST'])
+def add_localization():
+    authorized = authorize(request=request)
+    if not authorized: return {"status": "Unauthorized"}, 401
+    data = request.get_json()
+    label = data.get('label')
+    zh = data.get('zh')
+    if label is None or zh is None:
+        return {"status": "Bad Request"}, 400
+    query_db('insert into local (label, zh) values (?, ?)', [label, zh])
+    return {"status": "Success"}, 200
+
+@app.route('/api/update_i18n_ZH', methods=['POST'])
+def update_localization():
+    authorized = authorize(request=request)
+    if not authorized: return {"status": "Unauthorized"}, 401
+    data = request.get_json()
+    label = data.get('label')
+    zh = data.get('zh')
+    if label is None or zh is None:
+        return {"status": "Bad Request"}, 400
+    query_db('update local set zh = ? where label = ?', [zh, label])
+    return {"status": "Success"}, 200
+
+## Delete Methods
+@app.route('/api/delete_data', methods=['DELETE'])
+def delete_data():
+    authorized = authorize(request=request)
+    if not authorized: return {"status": "Unauthorized"}, 401
+    data = request.get_json()
+    item_id = data.get('item_id')
+    if item_id is None:
+        return {"status": "Bad Request"}, 400
+    query_db('delete from item where item_id = ?', [item_id])
     return {"status": "Success"}, 200
 
 if __name__ == "__main__":
